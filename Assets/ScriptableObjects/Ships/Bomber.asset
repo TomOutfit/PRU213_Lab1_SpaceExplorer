@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d9e74031deef8041a1178672e24d632, type: 3}
+  m_Name: Bomber
+  m_EditorClassIdentifier: Assembly-CSharp::ShipData
+  shipName: Bomber
+  description: Heavy damage, slow fire rate
+  speed: 6
+  rotationSpeed: 10
+  fireRate: 0.3
+  damage: 30
+  laserSpeed: 15
+  maxLives: 3
+  size: 0.6
+  shipColor: {r: 1, g: 0, b: 0, a: 1}
+  hasShield: 0
+  hasDoubleShot: 0
+  hasTripleShot: 0
