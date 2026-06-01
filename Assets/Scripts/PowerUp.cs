@@ -8,7 +8,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { ScoreBonus, Shield }
+    public enum PowerUpType { ScoreBonus, Shield, RapidFire }
     
     [Header("Settings")]
     public PowerUpType type = PowerUpType.ScoreBonus;
@@ -18,6 +18,7 @@ public class PowerUp : MonoBehaviour
 
     private Camera mainCam;
     private Vector3 moveDirection;
+    private Vector3 initialScale;
 
     private void Start()
     {
@@ -33,11 +34,16 @@ public class PowerUp : MonoBehaviour
         
         float angle = Random.Range(-45f, 45f);
         moveDirection = Quaternion.Euler(0, 0, angle) * Vector3.down;
+        initialScale = transform.localScale;
     }
 
     private void Update()
     {
         transform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
+        
+        // Thêm hiệu ứng nhấp nháy (phóng to thu nhỏ) để dễ nhìn hơn
+        float pulse = 1f + Mathf.Sin(Time.time * 6f) * 0.25f;
+        transform.localScale = initialScale * pulse;
     }
 
     private void FixedUpdate()
@@ -71,9 +77,16 @@ public class PowerUp : MonoBehaviour
             if (audioMgr != null) audioMgr.PlayStarCollect();
 
             PlayerController pc = other.GetComponent<PlayerController>();
-            if (pc != null && type == PowerUpType.Shield)
+            if (pc != null)
             {
-                pc.ActivateShield();
+                if (type == PowerUpType.Shield)
+                {
+                    pc.ActivateShield();
+                }
+                else if (type == PowerUpType.RapidFire)
+                {
+                    pc.ActivateRapidFire();
+                }
             }
 
             GamePlayManager gpm = FindAnyObjectByType<GamePlayManager>();

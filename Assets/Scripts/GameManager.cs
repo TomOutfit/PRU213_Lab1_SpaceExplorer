@@ -79,6 +79,7 @@ public class GameManager : MonoBehaviour
         Lives = initialLives;
         PlayTime = 0f;
         IsGameActive = true;
+        Time.timeScale = 1f; // Ensure time scale is reset to normal
     }
 
     public void AddScore(int amount)

@@ -10,7 +10,7 @@ public class GamePlayManager : MonoBehaviour
     [Header("Prefabs")]
     public GameObject playerPrefab;
     public GameObject asteroidPrefab;
-    public GameObject starPrefab;
+    public GameObject[] powerUpPrefabs;
     public GameObject laserPrefab;
 
     [Header("Spawning")]
@@ -54,7 +54,11 @@ public class GamePlayManager : MonoBehaviour
             GameObject[] objects = GameObject.FindGameObjectsWithTag(t);
             foreach (GameObject obj in objects)
             {
-                Destroy(obj);
+                // Only destroy if it's not a UI element (layer 5 is UI)
+                if (obj.layer != 5)
+                {
+                    Destroy(obj);
+                }
             }
         }
     }
@@ -231,29 +235,57 @@ public class GamePlayManager : MonoBehaviour
     private void SpawnStar()
     {
 #if UNITY_EDITOR
-        if (starPrefab == null) starPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/star_bronze_0.prefab");
+        if (powerUpPrefabs == null || powerUpPrefabs.Length == 0)
+        {
+            string[] paths = new string[] {
+                "Assets/Prefabs/powerupYellow_star_0.prefab",
+                "Assets/Prefabs/powerupBlue_shield_0.prefab",
+                "Assets/Prefabs/powerupRed_bolt_0.prefab"
+            };
+            powerUpPrefabs = new GameObject[paths.Length];
+            for (int i = 0; i < paths.Length; i++)
+            {
+                powerUpPrefabs[i] = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(paths[i]);
+            }
+        }
 #endif
-        if (starPrefab == null || activeStars >= maxStars) return;
+        if (powerUpPrefabs == null || powerUpPrefabs.Length == 0 || activeStars >= maxStars) return;
+
+        GameObject selectedPrefab = powerUpPrefabs[Random.Range(0, powerUpPrefabs.Length)];
+        if (selectedPrefab == null) return;
 
         Vector3 spawnPos = new Vector3(Random.Range(minSpawnX, maxSpawnX), spawnY, 0f);
-        GameObject starObj = Instantiate(starPrefab, spawnPos, Quaternion.identity);
+        GameObject starObj = Instantiate(selectedPrefab, spawnPos, Quaternion.identity);
+        
+        // Make the item bigger so it is clearly visible to the player
+        starObj.transform.localScale = new Vector3(2f, 2f, 2f);
         
         PowerUp pu = starObj.GetComponent<PowerUp>();
         // Ensure the script is attached so it actually falls down!
         if (pu == null)
         {
             pu = starObj.AddComponent<PowerUp>();
-            pu.type = PowerUp.PowerUpType.ScoreBonus; // Default to score bonus
-            if (starObj.GetComponent<Rigidbody2D>() == null)
-            {
-                var rb = starObj.AddComponent<Rigidbody2D>();
-                rb.gravityScale = 0f;
-            }
-            if (starObj.GetComponent<Collider2D>() == null)
-            {
-                var col = starObj.AddComponent<PolygonCollider2D>();
-                col.isTrigger = true;
-            }
+        }
+        
+        // Determine type based on prefab name
+        if (selectedPrefab.name.ToLower().Contains("shield"))
+            pu.type = PowerUp.PowerUpType.Shield;
+        else if (selectedPrefab.name.ToLower().Contains("bolt") || selectedPrefab.name.ToLower().Contains("pill"))
+            pu.type = PowerUp.PowerUpType.RapidFire;
+        else
+            pu.type = PowerUp.PowerUpType.ScoreBonus;
+
+        starObj.tag = "Star"; // Ensure lasers ignore it and GamePlayManager cleans it up on GameOver
+
+        if (starObj.GetComponent<Rigidbody2D>() == null)
+        {
+            var rb = starObj.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 0f;
+        }
+        if (starObj.GetComponent<Collider2D>() == null)
+        {
+            var col = starObj.AddComponent<PolygonCollider2D>();
+            col.isTrigger = true;
         }
         
         SpriteRenderer sr = starObj.GetComponent<SpriteRenderer>();
@@ -263,18 +295,6 @@ public class GamePlayManager : MonoBehaviour
             sr.sortingOrder = 100;
             sr.color = Color.white;
             sr.enabled = true;
-#if UNITY_EDITOR
-            if (sr.sprite == null)
-            {
-                string[] starPaths = new string[] {
-                    "Assets/Sprites/Background/Star_1.png",
-                    "Assets/Sprites/Background/Star_2.png",
-                    "Assets/Sprites/Background/Star_3.png"
-                };
-                string randomPath = starPaths[Random.Range(0, starPaths.Length)];
-                sr.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(randomPath);
-            }
-#endif
         }
         
         activeStars++;

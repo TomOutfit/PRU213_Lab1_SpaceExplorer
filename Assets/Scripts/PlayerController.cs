@@ -198,6 +198,21 @@ public class PlayerController : MonoBehaviour
         Debug.Log("Shield Activated!");
     }
 
+    public void ActivateRapidFire()
+    {
+        StartCoroutine(RapidFireRoutine());
+        Debug.Log("Rapid Fire Activated!");
+    }
+
+    private System.Collections.IEnumerator RapidFireRoutine()
+    {
+        float originalCooldown = shootCooldown;
+        shootCooldown = 0.05f; // extremely fast shooting
+        yield return new WaitForSeconds(5f);
+        shootCooldown = originalCooldown;
+        Debug.Log("Rapid Fire Deactivated!");
+    }
+
     /// <summary>
     /// Handles collision logic between the spaceship, asteroids, and stars.
     /// </summary>
