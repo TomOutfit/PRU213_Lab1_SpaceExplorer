@@ -34,6 +34,9 @@ public class PlayerController : MonoBehaviour
     private bool hasShield = false;
     private GameObject shieldVisual;
 
+    private AudioManager audioMgr;
+    private GamePlayManager gpm;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -59,6 +62,8 @@ public class PlayerController : MonoBehaviour
     private void Start()
     {
         mainCam = Camera.main;
+        audioMgr = FindAnyObjectByType<AudioManager>();
+        gpm = FindAnyObjectByType<GamePlayManager>();
         UpdateScreenBounds();
         CreateEngineThruster();
     }
@@ -186,7 +191,6 @@ public class PlayerController : MonoBehaviour
         if (laserRb != null)
             laserRb.linearVelocity = Vector2.up * laserSpeed;
             
-        AudioManager audioMgr = FindAnyObjectByType<AudioManager>();
         if (audioMgr != null) audioMgr.PlayLaser();
     }
 
@@ -222,15 +226,12 @@ public class PlayerController : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Asteroid"))
         {
-            GamePlayManager gpm = FindAnyObjectByType<GamePlayManager>();
             if (gpm != null)
             {
                 gpm.OnAsteroidDestroyed();
                 gpm.CreateExplosionEffect(collision.transform.position);
             }
             
-            AudioManager audioMgr = FindAnyObjectByType<AudioManager>();
-
             if (hasShield)
             {
                 // Shield breaks, asteroid is destroyed, player takes no damage
