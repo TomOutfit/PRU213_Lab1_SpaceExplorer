@@ -19,6 +19,13 @@ public class MenuController : MonoBehaviour
 
     private void Start()
     {
+        // Instantiate beautiful dynamic space background
+        if (FindAnyObjectByType<SpaceBackgroundEffects>() == null)
+        {
+            GameObject bgObj = new GameObject("SpaceBackgroundEffects");
+            bgObj.AddComponent<SpaceBackgroundEffects>();
+        }
+
         // Hide guide panel at start
         if (guideCanva != null)
             guideCanva.SetActive(false);

@@ -59,13 +59,59 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        if (scene.name == "Menu")
+        {
+            if (backgroundMusicSource != null)
+            {
+                backgroundMusicSource.Stop();
+            }
+        }
+        else if (scene.name == "Play")
+        {
+            if (backgroundMusicSource != null && backgroundMusic != null)
+            {
+                if (backgroundMusicSource.clip != backgroundMusic || !backgroundMusicSource.isPlaying)
+                {
+                    backgroundMusicSource.clip = backgroundMusic;
+                    backgroundMusicSource.volume = defaultMusicVolume;
+                    backgroundMusicSource.loop = true;
+                    backgroundMusicSource.Play();
+                }
+            }
+        }
+    }
+
     private void Start()
     {
-        if (backgroundMusic != null)
+        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (currentScene == "Play")
         {
-            backgroundMusicSource.clip = backgroundMusic;
-            backgroundMusicSource.volume = defaultMusicVolume;
-            backgroundMusicSource.Play();
+            if (backgroundMusic != null && backgroundMusicSource != null)
+            {
+                backgroundMusicSource.clip = backgroundMusic;
+                backgroundMusicSource.volume = defaultMusicVolume;
+                backgroundMusicSource.loop = true;
+                backgroundMusicSource.Play();
+            }
+        }
+        else if (currentScene == "Menu")
+        {
+            if (backgroundMusicSource != null)
+            {
+                backgroundMusicSource.Stop();
+            }
         }
     }
 

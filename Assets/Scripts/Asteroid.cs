@@ -26,11 +26,20 @@ public class Asteroid : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         sr = GetComponent<SpriteRenderer>();
+        
+        // Randomize asteroid scale
+        float randomScale = Random.Range(0.6f, 1.4f);
+        transform.localScale = new Vector3(randomScale, randomScale, 1f);
+
         if (sr != null) 
         {
             sr.sortingLayerName = "Default";
             sr.sortingOrder = 100;
-            sr.color = Color.white;
+            // Subtle color tint variation for organic feel
+            float r = Random.Range(0.85f, 1.0f);
+            float g = Random.Range(0.85f, 1.0f);
+            float b = Random.Range(0.85f, 1.0f);
+            sr.color = new Color(r, g, b, 1f);
             sr.enabled = true;
         }
 
@@ -39,7 +48,9 @@ public class Asteroid : MonoBehaviour
             sr.sprite = asteroidSprites[Random.Range(0, asteroidSprites.Length)];
         }
 
-        moveSpeed = Random.Range(minMoveSpeed, maxMoveSpeed);
+        // Tiny asteroids are faster, big ones are slower
+        float baseSpeed = Random.Range(minMoveSpeed, maxMoveSpeed);
+        moveSpeed = baseSpeed * (1.2f / randomScale);
         
         // Random direction slightly angled downwards
         float angle = Random.Range(-45f, 45f);

@@ -29,6 +29,13 @@ public class UIManager : MonoBehaviour
     private int lastLives = -1;
     private int lastTimeSeconds = -1;
 
+    [Header("Combo & Dash UI References")]
+    public TMP_Text comboText;
+    public TMP_Text grazeNotificationText;
+    public TMP_Text dashCooldownText;
+
+    private Coroutine grazeCoroutine;
+
     private void OnEnable()
     {
         GameManager.OnGameOverEvent += ShowGameOver;
@@ -41,6 +48,8 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        EnsureUIElements();
+
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(false);
@@ -55,6 +64,121 @@ public class UIManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void EnsureUIElements()
+    {
+        // Try to find if they already exist in the children
+        if (comboText == null)
+        {
+            Transform found = transform.Find("ComboText");
+            if (found != null) comboText = found.GetComponent<TMP_Text>();
+        }
+
+        // Programmatically create if not assigned
+        if (comboText == null)
+        {
+            GameObject comboObj = new GameObject("ComboText");
+            comboObj.transform.SetParent(this.transform, false);
+            
+            comboText = comboObj.AddComponent<TextMeshProUGUI>();
+            comboText.fontSize = 28;
+            comboText.fontStyle = FontStyles.Bold;
+            comboText.color = new Color(1f, 0.85f, 0f, 1f); // Gold color
+            comboText.alignment = TextAlignmentOptions.Center;
+            
+            RectTransform rect = comboText.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0, -90);
+        }
+
+        if (grazeNotificationText == null)
+        {
+            Transform found = transform.Find("GrazeText");
+            if (found != null) grazeNotificationText = found.GetComponent<TMP_Text>();
+        }
+
+        if (grazeNotificationText == null)
+        {
+            GameObject grazeObj = new GameObject("GrazeText");
+            grazeObj.transform.SetParent(this.transform, false);
+            
+            grazeNotificationText = grazeObj.AddComponent<TextMeshProUGUI>();
+            grazeNotificationText.fontSize = 36;
+            grazeNotificationText.fontStyle = FontStyles.Bold;
+            grazeNotificationText.color = new Color(0f, 1f, 0.5f, 1f); // Neon green
+            grazeNotificationText.alignment = TextAlignmentOptions.Center;
+            grazeNotificationText.text = "";
+            
+            RectTransform rect = grazeNotificationText.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0, 100);
+            
+            grazeNotificationText.gameObject.SetActive(false);
+        }
+
+        if (dashCooldownText == null)
+        {
+            Transform found = transform.Find("DashCooldownText");
+            if (found != null) dashCooldownText = found.GetComponent<TMP_Text>();
+        }
+
+        if (dashCooldownText == null)
+        {
+            GameObject dashObj = new GameObject("DashCooldownText");
+            dashObj.transform.SetParent(this.transform, false);
+            
+            dashCooldownText = dashObj.AddComponent<TextMeshProUGUI>();
+            dashCooldownText.fontSize = 18;
+            dashCooldownText.fontStyle = FontStyles.Bold;
+            dashCooldownText.color = Color.white;
+            dashCooldownText.alignment = TextAlignmentOptions.Left;
+            
+            RectTransform rect = dashCooldownText.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(0f, 0f);
+            rect.pivot = new Vector2(0f, 0f);
+            rect.anchoredPosition = new Vector2(20, 20); // bottom left
+        }
+    }
+
+    public void TriggerGrazeUI()
+    {
+        if (grazeNotificationText == null) return;
+        if (grazeCoroutine != null) StopCoroutine(grazeCoroutine);
+        grazeCoroutine = StartCoroutine(GrazeNotificationRoutine());
+    }
+
+    private System.Collections.IEnumerator GrazeNotificationRoutine()
+    {
+        grazeNotificationText.text = "GRAZE!";
+        grazeNotificationText.gameObject.SetActive(true);
+        grazeNotificationText.color = new Color(0f, 1f, 0.5f, 1f);
+        
+        float duration = 0.5f;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            
+            // Pulse: start small, get big, and fade out
+            float scale = Mathf.Lerp(0.8f, 1.6f, t);
+            grazeNotificationText.transform.localScale = new Vector3(scale, scale, 1f);
+            
+            Color c = grazeNotificationText.color;
+            c.a = Mathf.Lerp(1f, 0f, t);
+            grazeNotificationText.color = c;
+            
+            yield return null;
+        }
+        
+        grazeNotificationText.gameObject.SetActive(false);
     }
 
     private void Update()
@@ -87,6 +211,58 @@ public class UIManager : MonoBehaviour
         {
             UpdateLivesDisplay(lives);
             lastLives = lives;
+        }
+
+        // Update Combo UI
+        if (comboText != null)
+        {
+            int multiplier = GameManager.Instance.ComboMultiplier;
+            float timer = GameManager.Instance.ComboTimer;
+
+            if (multiplier > 1 && GameManager.Instance.IsGameActive)
+            {
+                comboText.text = $"COMBO x{multiplier}\n{timer:F1}s";
+                comboText.gameObject.SetActive(true);
+
+                // Pulse scale
+                float scale = 1f + (timer / GameManager.MaxComboTime) * 0.25f + Mathf.PingPong(Time.time * 6f, 0.12f);
+                comboText.transform.localScale = new Vector3(scale, scale, 1f);
+            }
+            else
+            {
+                comboText.gameObject.SetActive(false);
+            }
+        }
+
+        // Update Dash status
+        if (dashCooldownText != null && GameManager.Instance.IsGameActive)
+        {
+            GameObject player = GameObject.FindWithTag("Player");
+            if (player != null)
+            {
+                PlayerController pc = player.GetComponent<PlayerController>();
+                if (pc != null)
+                {
+                    float cdSec = pc.GetDashCooldownSeconds();
+                    if (cdSec > 0f)
+                    {
+                        dashCooldownText.text = $"DASH COOLDOWN: {cdSec:F1}s";
+                        dashCooldownText.color = new Color(1f, 0.3f, 0.3f, 1f);
+                        dashCooldownText.transform.localScale = Vector3.one;
+                    }
+                    else
+                    {
+                        dashCooldownText.text = "DASH READY (SHIFT)";
+                        dashCooldownText.color = new Color(0f, 0.8f, 1f, 1f);
+                        float pulse = 1f + Mathf.PingPong(Time.time * 2f, 0.08f);
+                        dashCooldownText.transform.localScale = new Vector3(pulse, pulse, 1f);
+                    }
+                }
+            }
+            else
+            {
+                dashCooldownText.text = "";
+            }
         }
     }
 
@@ -137,6 +313,10 @@ public class UIManager : MonoBehaviour
                 if (icon != null) icon.gameObject.SetActive(false);
             }
         }
+
+        if (comboText != null) comboText.gameObject.SetActive(false);
+        if (grazeNotificationText != null) grazeNotificationText.gameObject.SetActive(false);
+        if (dashCooldownText != null) dashCooldownText.gameObject.SetActive(false);
     }
     
     // UI Button callbacks

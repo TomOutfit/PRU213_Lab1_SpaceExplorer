@@ -28,7 +28,15 @@ public class PowerUp : MonoBehaviour
         {
             sr.sortingLayerName = "Default";
             sr.sortingOrder = 100;
-            sr.color = Color.white;
+            
+            // Tint based on power-up type for instant readability!
+            if (type == PowerUpType.Shield)
+                sr.color = new Color(0f, 0.8f, 1f); // Shield is Cool Cyan
+            else if (type == PowerUpType.RapidFire)
+                sr.color = new Color(1f, 0.2f, 0.4f); // Rapid Fire is Hot Magenta
+            else
+                sr.color = new Color(1f, 0.9f, 0.2f); // Score Bonus is Golden Yellow
+                
             sr.enabled = true;
         }
         
@@ -90,7 +98,12 @@ public class PowerUp : MonoBehaviour
             }
 
             GamePlayManager gpm = FindAnyObjectByType<GamePlayManager>();
-            if (gpm != null) gpm.CreateCollectEffect(transform.position);
+            if (gpm != null)
+            {
+                SpriteRenderer sr = GetComponent<SpriteRenderer>();
+                Color collectColor = sr != null ? sr.color : Color.yellow;
+                gpm.CreateCollectEffect(transform.position, collectColor);
+            }
 
             Destroy(gameObject);
         }

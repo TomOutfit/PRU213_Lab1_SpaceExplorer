@@ -24,6 +24,12 @@ public class GameManager : MonoBehaviour
     public float PlayTime { get; private set; }
     public bool IsGameActive { get; private set; }
 
+    // Combo System properties
+    public int ComboMultiplier { get; private set; } = 1;
+    public float ComboTimer { get; private set; } = 0f;
+    public const float MaxComboTime = 3f;
+    public const int MaxComboMultiplier = 5;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -46,6 +52,16 @@ public class GameManager : MonoBehaviour
         if (IsGameActive)
         {
             PlayTime += Time.deltaTime;
+
+            // Decay combo timer over time
+            if (ComboMultiplier > 1)
+            {
+                ComboTimer -= Time.deltaTime;
+                if (ComboTimer <= 0f)
+                {
+                    ResetCombo();
+                }
+            }
         }
     }
 
@@ -80,19 +96,49 @@ public class GameManager : MonoBehaviour
         PlayTime = 0f;
         IsGameActive = true;
         Time.timeScale = 1f; // Ensure time scale is reset to normal
+        ResetCombo();
     }
 
     public void AddScore(int amount)
     {
         if (!IsGameActive) return;
-        Score += amount;
-        Debug.Log($"[GameManager] Score +{amount}  Total: {Score}");
+
+        if (amount < 0)
+        {
+            // Penalties should not be multiplied, and they should break combo
+            Score += amount;
+            ResetCombo();
+            Debug.Log($"[GameManager] Score Penalty {amount}  Total: {Score}");
+            return;
+        }
+
+        int multiplier = ComboMultiplier;
+        Score += amount * multiplier;
+        Debug.Log($"[GameManager] Score +{amount * multiplier} (Base: {amount} x{multiplier})  Total: {Score}");
+
+        IncreaseCombo();
+    }
+
+    public void IncreaseCombo()
+    {
+        if (ComboMultiplier < MaxComboMultiplier)
+        {
+            ComboMultiplier++;
+        }
+        ComboTimer = MaxComboTime;
+    }
+
+    public void ResetCombo()
+    {
+        ComboMultiplier = 1;
+        ComboTimer = 0f;
     }
 
     public void LoseLife()
     {
         if (!IsGameActive) return;
         Lives--;
+        ResetCombo(); // Reset combo on damage
         Debug.Log($"[GameManager] Lost a life! Remaining: {Lives}");
 
         if (Lives <= 0)
