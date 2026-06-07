@@ -8,7 +8,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class PowerUp : MonoBehaviour
 {
-    public enum PowerUpType { ScoreBonus, Shield }
+    public enum PowerUpType { ScoreBonus, Shield, RapidFire }
     
     [Header("Settings")]
     public PowerUpType type = PowerUpType.ScoreBonus;
@@ -18,6 +18,7 @@ public class PowerUp : MonoBehaviour
 
     private Camera mainCam;
     private Vector3 moveDirection;
+    private Vector3 initialScale;
 
     private void Start()
     {
@@ -27,17 +28,30 @@ public class PowerUp : MonoBehaviour
         {
             sr.sortingLayerName = "Default";
             sr.sortingOrder = 100;
-            sr.color = Color.white;
+            
+            // Tint based on power-up type for instant readability!
+            if (type == PowerUpType.Shield)
+                sr.color = new Color(0f, 0.8f, 1f); // Shield is Cool Cyan
+            else if (type == PowerUpType.RapidFire)
+                sr.color = new Color(1f, 0.2f, 0.4f); // Rapid Fire is Hot Magenta
+            else
+                sr.color = new Color(1f, 0.9f, 0.2f); // Score Bonus is Golden Yellow
+                
             sr.enabled = true;
         }
         
         float angle = Random.Range(-45f, 45f);
         moveDirection = Quaternion.Euler(0, 0, angle) * Vector3.down;
+        initialScale = transform.localScale;
     }
 
     private void Update()
     {
         transform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
+        
+        // Thêm hiệu ứng nhấp nháy (phóng to thu nhỏ) để dễ nhìn hơn
+        float pulse = 1f + Mathf.Sin(Time.time * 6f) * 0.25f;
+        transform.localScale = initialScale * pulse;
     }
 
     private void FixedUpdate()
@@ -71,13 +85,25 @@ public class PowerUp : MonoBehaviour
             if (audioMgr != null) audioMgr.PlayStarCollect();
 
             PlayerController pc = other.GetComponent<PlayerController>();
-            if (pc != null && type == PowerUpType.Shield)
+            if (pc != null)
             {
-                pc.ActivateShield();
+                if (type == PowerUpType.Shield)
+                {
+                    pc.ActivateShield();
+                }
+                else if (type == PowerUpType.RapidFire)
+                {
+                    pc.ActivateRapidFire();
+                }
             }
 
             GamePlayManager gpm = FindAnyObjectByType<GamePlayManager>();
-            if (gpm != null) gpm.CreateCollectEffect(transform.position);
+            if (gpm != null)
+            {
+                SpriteRenderer sr = GetComponent<SpriteRenderer>();
+                Color collectColor = sr != null ? sr.color : Color.yellow;
+                gpm.CreateCollectEffect(transform.position, collectColor);
+            }
 
             Destroy(gameObject);
         }

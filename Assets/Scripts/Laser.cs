@@ -34,12 +34,34 @@ public class Laser : MonoBehaviour
         }
     }
 
+    private Vector2 velocityDirection = Vector2.up;
+    private bool directionSet = false;
+
+    public void SetDirection(Vector2 dir)
+    {
+        velocityDirection = dir.normalized;
+        directionSet = true;
+        if (rb == null) rb = GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.linearVelocity = velocityDirection * speed;
+        }
+
+        // Rotate the laser sprite to align with the shooting angle
+        float angle = Mathf.Atan2(velocityDirection.y, velocityDirection.x) * Mathf.Rad2Deg - 90f;
+        transform.rotation = Quaternion.AngleAxis(angle, Vector3.forward);
+    }
+
     private void Start()
     {
         mainCam = Camera.main;
         spawnTime = Time.time;
-        rb.linearVelocity = Vector2.up * speed;
         rb.bodyType = RigidbodyType2D.Kinematic; // kinematic so OnCollisionEnter2D still fires
+        
+        if (!directionSet)
+        {
+            rb.linearVelocity = velocityDirection * speed;
+        }
     }
 
     private void Update()

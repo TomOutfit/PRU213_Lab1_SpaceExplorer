@@ -9,35 +9,42 @@ public class MenuController : MonoBehaviour
 {
     [Header("UI References")]
     public Button playButton;
-    public Button instructionsButton;
-    public Button closeInstructionsButton;
+    public Button guideButton;
+    public Button closeGuideButton;
     public Button quitButton;
-    public GameObject instructionsPanel;
+    public GameObject guideCanva;
 
     [Header("Ship Selection (Optional Visual Variety)")]
     public Sprite[] menuBackgroundShipSprites;
 
     private void Start()
     {
-        // Hide instructions panel at start
-        if (instructionsPanel != null)
-            instructionsPanel.SetActive(false);
+        // Instantiate beautiful dynamic space background
+        if (FindAnyObjectByType<SpaceBackgroundEffects>() == null)
+        {
+            GameObject bgObj = new GameObject("SpaceBackgroundEffects");
+            bgObj.AddComponent<SpaceBackgroundEffects>();
+        }
+
+        // Hide guide panel at start
+        if (guideCanva != null)
+            guideCanva.SetActive(false);
 
         // Wire up button listeners
         if (playButton != null)
             playButton.onClick.AddListener(OnPlayClicked);
 
-        if (instructionsButton != null)
-            instructionsButton.onClick.AddListener(OnInstructionsClicked);
+        if (guideButton != null)
+            guideButton.onClick.AddListener(OnGuideClicked);
 
-        if (closeInstructionsButton != null)
-            closeInstructionsButton.onClick.AddListener(OnCloseInstructionsClicked);
+        if (closeGuideButton != null)
+            closeGuideButton.onClick.AddListener(OnCloseGuideClicked);
 
         if (quitButton != null)
             quitButton.onClick.AddListener(OnQuitClicked);
             
         // Add UI Button Animation dynamically to all buttons
-        Button[] allButtons = { playButton, instructionsButton, closeInstructionsButton, quitButton };
+        Button[] allButtons = { playButton, guideButton, closeGuideButton, quitButton };
         foreach (Button btn in allButtons)
         {
             if (btn != null && btn.gameObject.GetComponent<UIButtonAnimation>() == null)
@@ -56,18 +63,18 @@ public class MenuController : MonoBehaviour
             UnityEngine.SceneManagement.SceneManager.LoadScene("Play");
     }
 
-    public void OnInstructionsClicked()
+    public void OnGuideClicked()
     {
-        Debug.Log("[MenuController] Instructions panel opened.");
-        if (instructionsPanel != null)
-            instructionsPanel.SetActive(true);
+        Debug.Log("[MenuController] Guide panel opened.");
+        if (guideCanva != null)
+            guideCanva.SetActive(true);
     }
 
-    public void OnCloseInstructionsClicked()
+    public void OnCloseGuideClicked()
     {
-        Debug.Log("[MenuController] Instructions panel closed.");
-        if (instructionsPanel != null)
-            instructionsPanel.SetActive(false);
+        Debug.Log("[MenuController] Guide panel closed.");
+        if (guideCanva != null)
+            guideCanva.SetActive(false);
     }
 
     public void OnQuitClicked()
@@ -91,10 +98,10 @@ public class MenuController : MonoBehaviour
     {
         if (playButton != null)
             playButton.onClick.RemoveListener(OnPlayClicked);
-        if (instructionsButton != null)
-            instructionsButton.onClick.RemoveListener(OnInstructionsClicked);
-        if (closeInstructionsButton != null)
-            closeInstructionsButton.onClick.RemoveListener(OnCloseInstructionsClicked);
+        if (guideButton != null)
+            guideButton.onClick.RemoveListener(OnGuideClicked);
+        if (closeGuideButton != null)
+            closeGuideButton.onClick.RemoveListener(OnCloseGuideClicked);
         if (quitButton != null)
             quitButton.onClick.RemoveListener(OnQuitClicked);
     }

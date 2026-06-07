@@ -16,11 +16,29 @@ public class Star : MonoBehaviour
 
     private Vector3 startPos;
     private float timeOffset;
+    private Color starColor = Color.white;
+
+    public Color StarColor => starColor;
 
     private void Awake()
     {
         startPos = transform.position;
         timeOffset = Random.Range(0f, Mathf.PI * 2f);
+
+        // Randomize star color out of: Gold (Yellow), Cyan (Blue), Magenta (Pink), Lime (Green)
+        Color[] possibleColors = {
+            new Color(1f, 0.9f, 0.2f),  // Gold
+            new Color(0f, 0.8f, 1f),   // Cyan
+            new Color(1f, 0.2f, 0.6f),  // Magenta
+            new Color(0.2f, 1f, 0.4f)   // Lime
+        };
+        starColor = possibleColors[Random.Range(0, possibleColors.Length)];
+
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            sr.color = starColor;
+        }
     }
 
     private void Update()
@@ -46,7 +64,11 @@ public class Star : MonoBehaviour
                 GameManager.Instance.AddScore(GameManager.Instance.pointsPerStar);
 
             GamePlayManager gpm = FindAnyObjectByType<GamePlayManager>();
-            if (gpm != null) gpm.OnStarCollected();
+            if (gpm != null)
+            {
+                gpm.OnStarCollected();
+                gpm.CreateCollectEffect(transform.position, starColor);
+            }
 
             Destroy(gameObject);
         }

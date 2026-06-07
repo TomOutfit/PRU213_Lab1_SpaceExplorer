@@ -10,7 +10,7 @@ public class GamePlayManager : MonoBehaviour
     [Header("Prefabs")]
     public GameObject playerPrefab;
     public GameObject asteroidPrefab;
-    public GameObject starPrefab;
+    public GameObject[] powerUpPrefabs;
     public GameObject laserPrefab;
 
     [Header("Spawning")]
@@ -54,7 +54,11 @@ public class GamePlayManager : MonoBehaviour
             GameObject[] objects = GameObject.FindGameObjectsWithTag(t);
             foreach (GameObject obj in objects)
             {
-                Destroy(obj);
+                // Only destroy if it's not a UI element (layer 5 is UI)
+                if (obj.layer != 5)
+                {
+                    Destroy(obj);
+                }
             }
         }
     }
@@ -106,6 +110,22 @@ public class GamePlayManager : MonoBehaviour
         activeStars = 0;
         spawnTimer = 0f;
 
+        // Instantiate beautiful dynamic space background
+        if (FindAnyObjectByType<SpaceBackgroundEffects>() == null)
+        {
+            GameObject bgObj = new GameObject("SpaceBackgroundEffects");
+            bgObj.AddComponent<SpaceBackgroundEffects>();
+        }
+
+        // Disable old simple background stars
+        if (backgroundStars != null)
+        {
+            foreach (Transform star in backgroundStars)
+            {
+                if (star != null) star.gameObject.SetActive(false);
+            }
+        }
+
         // Reset GameManager state
         if (GameManager.Instance != null)
             GameManager.Instance.ResetGameState();
@@ -152,7 +172,7 @@ public class GamePlayManager : MonoBehaviour
             player.tag = "Player";
         }
 
-        // Apply random ship sprite if available
+        // Apply random ship sprite and random color theme if available
         if (playerShipSprites != null && playerShipSprites.Length > 0)
         {
             SpriteRenderer sr = player.GetComponentInChildren<SpriteRenderer>();
@@ -160,8 +180,16 @@ public class GamePlayManager : MonoBehaviour
             if (sr != null)
             {
                 sr.sprite = playerShipSprites[Random.Range(0, playerShipSprites.Length)];
-                sr.color = Color.white;
+                
+                // Generate a vibrant random ship color tint
+                Color randomTint = Color.HSVToRGB(Random.value, 0.45f, 1f);
+                sr.color = randomTint;
                 sr.enabled = true;
+                
+                // Pass the color tint to the PlayerController
+                var pc = player.GetComponent<PlayerController>();
+                if (pc == null) pc = player.GetComponentInChildren<PlayerController>();
+                if (pc != null) pc.shipColor = randomTint;
                 
                 // Re-add PolygonCollider to fit the new sprite perfectly
                 var col = player.GetComponent<PolygonCollider2D>();
@@ -231,29 +259,57 @@ public class GamePlayManager : MonoBehaviour
     private void SpawnStar()
     {
 #if UNITY_EDITOR
-        if (starPrefab == null) starPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/star_bronze_0.prefab");
+        if (powerUpPrefabs == null || powerUpPrefabs.Length == 0)
+        {
+            string[] paths = new string[] {
+                "Assets/Prefabs/powerupYellow_star_0.prefab",
+                "Assets/Prefabs/powerupBlue_shield_0.prefab",
+                "Assets/Prefabs/powerupRed_bolt_0.prefab"
+            };
+            powerUpPrefabs = new GameObject[paths.Length];
+            for (int i = 0; i < paths.Length; i++)
+            {
+                powerUpPrefabs[i] = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(paths[i]);
+            }
+        }
 #endif
-        if (starPrefab == null || activeStars >= maxStars) return;
+        if (powerUpPrefabs == null || powerUpPrefabs.Length == 0 || activeStars >= maxStars) return;
+
+        GameObject selectedPrefab = powerUpPrefabs[Random.Range(0, powerUpPrefabs.Length)];
+        if (selectedPrefab == null) return;
 
         Vector3 spawnPos = new Vector3(Random.Range(minSpawnX, maxSpawnX), spawnY, 0f);
-        GameObject starObj = Instantiate(starPrefab, spawnPos, Quaternion.identity);
+        GameObject starObj = Instantiate(selectedPrefab, spawnPos, Quaternion.identity);
+        
+        // Make the item bigger so it is clearly visible to the player
+        starObj.transform.localScale = new Vector3(2f, 2f, 2f);
         
         PowerUp pu = starObj.GetComponent<PowerUp>();
         // Ensure the script is attached so it actually falls down!
         if (pu == null)
         {
             pu = starObj.AddComponent<PowerUp>();
-            pu.type = PowerUp.PowerUpType.ScoreBonus; // Default to score bonus
-            if (starObj.GetComponent<Rigidbody2D>() == null)
-            {
-                var rb = starObj.AddComponent<Rigidbody2D>();
-                rb.gravityScale = 0f;
-            }
-            if (starObj.GetComponent<Collider2D>() == null)
-            {
-                var col = starObj.AddComponent<PolygonCollider2D>();
-                col.isTrigger = true;
-            }
+        }
+        
+        // Determine type based on prefab name
+        if (selectedPrefab.name.ToLower().Contains("shield"))
+            pu.type = PowerUp.PowerUpType.Shield;
+        else if (selectedPrefab.name.ToLower().Contains("bolt") || selectedPrefab.name.ToLower().Contains("pill"))
+            pu.type = PowerUp.PowerUpType.RapidFire;
+        else
+            pu.type = PowerUp.PowerUpType.ScoreBonus;
+
+        starObj.tag = "Star"; // Ensure lasers ignore it and GamePlayManager cleans it up on GameOver
+
+        if (starObj.GetComponent<Rigidbody2D>() == null)
+        {
+            var rb = starObj.AddComponent<Rigidbody2D>();
+            rb.gravityScale = 0f;
+        }
+        if (starObj.GetComponent<Collider2D>() == null)
+        {
+            var col = starObj.AddComponent<PolygonCollider2D>();
+            col.isTrigger = true;
         }
         
         SpriteRenderer sr = starObj.GetComponent<SpriteRenderer>();
@@ -263,18 +319,6 @@ public class GamePlayManager : MonoBehaviour
             sr.sortingOrder = 100;
             sr.color = Color.white;
             sr.enabled = true;
-#if UNITY_EDITOR
-            if (sr.sprite == null)
-            {
-                string[] starPaths = new string[] {
-                    "Assets/Sprites/Background/Star_1.png",
-                    "Assets/Sprites/Background/Star_2.png",
-                    "Assets/Sprites/Background/Star_3.png"
-                };
-                string randomPath = starPaths[Random.Range(0, starPaths.Length)];
-                sr.sprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(randomPath);
-            }
-#endif
         }
         
         activeStars++;
@@ -333,7 +377,6 @@ public class GamePlayManager : MonoBehaviour
     // Called by Asteroid/Star when destroyed so the spawner can track counts
     public void OnAsteroidDestroyed() { if (activeAsteroids > 0) activeAsteroids--; }
     public void OnStarCollected() { if (activeStars > 0) activeStars--; }
-
     public void CreateExplosionEffect(Vector3 pos)
     {
         GameObject fx = new GameObject("ExplosionFX");
@@ -342,14 +385,14 @@ public class GamePlayManager : MonoBehaviour
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var main = ps.main;
         main.duration = 0.5f;
-        main.startLifetime = 0.3f;
-        main.startSpeed = 10f;
-        main.startSize = 0.2f;
-        main.startColor = new Color(1f, 0.5f, 0f);
+        main.startLifetime = new ParticleSystem.MinMaxCurve(0.2f, 0.4f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(5f, 12f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.15f, 0.35f);
+        main.startColor = new Color(1f, 0.6f, 0.1f);
         
         var emission = ps.emission;
         emission.rateOverTime = 0;
-        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 30) });
+        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 35) });
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Sphere;
@@ -358,11 +401,48 @@ public class GamePlayManager : MonoBehaviour
         renderer.sortingOrder = 20;
         renderer.sortingLayerName = "Default";
 
+        // Create custom material with Sprites/Default shader
+        Material particleMat = new Material(Shader.Find("Sprites/Default"));
+        renderer.material = particleMat;
+
+        // Assign Star_1 sprite as the particle texture via the Texture Sheet Animation module
+        Sprite[] starAssets = Resources.LoadAll<Sprite>("Background/Star_1");
+        if (starAssets != null && starAssets.Length > 0)
+        {
+            var ts = ps.textureSheetAnimation;
+            ts.enabled = true;
+            ts.mode = ParticleSystemAnimationMode.Sprites;
+            ts.SetSprite(0, starAssets[0]);
+        }
+
+        // Taper size over lifetime
+        var sizeOverLifetime = ps.sizeOverLifetime;
+        sizeOverLifetime.enabled = true;
+        AnimationCurve sizeCurve = new AnimationCurve();
+        sizeCurve.AddKey(0.0f, 1.0f);
+        sizeCurve.AddKey(1.0f, 0.0f);
+        sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+
+        // Fade color from bright yellow-orange to dark red-transparent
+        var colorOverLifetime = ps.colorOverLifetime;
+        colorOverLifetime.enabled = true;
+        Gradient colorGradient = new Gradient();
+        colorGradient.SetKeys(
+            new GradientColorKey[] { new GradientColorKey(new Color(1f, 0.9f, 0.2f), 0f), new GradientColorKey(new Color(0.8f, 0.2f, 0f), 0.7f) },
+            new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(0.0f, 1.0f) }
+        );
+        colorOverLifetime.color = new ParticleSystem.MinMaxGradient(colorGradient);
+
         ps.Play();
         Destroy(fx, 1f);
     }
 
     public void CreateCollectEffect(Vector3 pos)
+    {
+        CreateCollectEffect(pos, new Color(1f, 0.9f, 0.2f));
+    }
+
+    public void CreateCollectEffect(Vector3 pos, Color starColor)
     {
         GameObject fx = new GameObject("CollectFX");
         fx.transform.position = pos;
@@ -370,14 +450,14 @@ public class GamePlayManager : MonoBehaviour
         ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         var main = ps.main;
         main.duration = 0.5f;
-        main.startLifetime = 0.4f;
-        main.startSpeed = 5f;
-        main.startSize = 0.15f;
-        main.startColor = Color.yellow;
+        main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.5f);
+        main.startSpeed = new ParticleSystem.MinMaxCurve(3f, 7f);
+        main.startSize = new ParticleSystem.MinMaxCurve(0.1f, 0.25f);
+        main.startColor = starColor; // Use dynamic collect color
         
         var emission = ps.emission;
         emission.rateOverTime = 0;
-        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 15) });
+        emission.SetBursts(new ParticleSystem.Burst[] { new ParticleSystem.Burst(0f, 20) });
 
         var shape = ps.shape;
         shape.shapeType = ParticleSystemShapeType.Circle;
@@ -385,6 +465,38 @@ public class GamePlayManager : MonoBehaviour
         var renderer = ps.GetComponent<ParticleSystemRenderer>();
         renderer.sortingOrder = 20;
         renderer.sortingLayerName = "Default";
+
+        // Create custom material with Sprites/Default shader
+        Material particleMat = new Material(Shader.Find("Sprites/Default"));
+        renderer.material = particleMat;
+
+        // Assign Star_2 sprite as the particle texture via the Texture Sheet Animation module
+        Sprite[] starAssets = Resources.LoadAll<Sprite>("Background/Star_2");
+        if (starAssets != null && starAssets.Length > 0)
+        {
+            var ts = ps.textureSheetAnimation;
+            ts.enabled = true;
+            ts.mode = ParticleSystemAnimationMode.Sprites;
+            ts.SetSprite(0, starAssets[0]);
+        }
+
+        // Taper size
+        var sizeOverLifetime = ps.sizeOverLifetime;
+        sizeOverLifetime.enabled = true;
+        AnimationCurve sizeCurve = new AnimationCurve();
+        sizeCurve.AddKey(0.0f, 1.0f);
+        sizeCurve.AddKey(1.0f, 0.0f);
+        sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, sizeCurve);
+
+        // Fade alpha over lifetime
+        var colorOverLifetime = ps.colorOverLifetime;
+        colorOverLifetime.enabled = true;
+        Gradient colorGradient = new Gradient();
+        colorGradient.SetKeys(
+            new GradientColorKey[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+            new GradientAlphaKey[] { new GradientAlphaKey(1.0f, 0.0f), new GradientAlphaKey(0.0f, 1.0f) }
+        );
+        colorOverLifetime.color = new ParticleSystem.MinMaxGradient(colorGradient);
 
         ps.Play();
         Destroy(fx, 1f);
