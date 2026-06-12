@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Controls the player spaceship: movement via arrow keys, shooting lasers with Space,
@@ -180,6 +181,36 @@ public class PlayerController : MonoBehaviour
         ps.Play();
     }
 
+    private Vector2 GetMovementInput()
+    {
+        float h = 0f;
+        float v = 0f;
+
+        var keyboard = Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.leftArrowKey.isPressed || keyboard.aKey.isPressed) h -= 1f;
+            if (keyboard.rightArrowKey.isPressed || keyboard.dKey.isPressed) h += 1f;
+            if (keyboard.upArrowKey.isPressed || keyboard.wKey.isPressed) v += 1f;
+            if (keyboard.downArrowKey.isPressed || keyboard.sKey.isPressed) v -= 1f;
+        }
+
+        var gamepad = Gamepad.current;
+        if (gamepad != null)
+        {
+            Vector2 stick = gamepad.leftStick.ReadValue();
+            if (Mathf.Abs(stick.x) > 0.19f) h += Mathf.Sign(stick.x);
+            if (Mathf.Abs(stick.y) > 0.19f) v += Mathf.Sign(stick.y);
+
+            if (gamepad.dpad.left.isPressed) h -= 1f;
+            if (gamepad.dpad.right.isPressed) h += 1f;
+            if (gamepad.dpad.up.isPressed) v += 1f;
+            if (gamepad.dpad.down.isPressed) v -= 1f;
+        }
+
+        return new Vector2(Mathf.Clamp(h, -1f, 1f), Mathf.Clamp(v, -1f, 1f));
+    }
+
     private void Update()
     {
         // Update timers
@@ -202,12 +233,18 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        var keyboard = Keyboard.current;
+        var gamepad = Gamepad.current;
+
+        bool dashPressed = false;
+        if (keyboard != null && keyboard.leftShiftKey.wasPressedThisFrame) dashPressed = true;
+        if (gamepad != null && gamepad.buttonWest.wasPressedThisFrame) dashPressed = true;
+
         // Check for Dash (Left Shift)
-        if (Input.GetKeyDown(KeyCode.LeftShift) && dashCooldownTimer <= 0f && !isDashing && GameManager.Instance != null && GameManager.Instance.IsGameActive)
+        if (dashPressed && dashCooldownTimer <= 0f && !isDashing && GameManager.Instance != null && GameManager.Instance.IsGameActive)
         {
-            float h = Input.GetAxisRaw("Horizontal");
-            float v = Input.GetAxisRaw("Vertical");
-            Vector2 moveDir = new Vector2(h, v).normalized;
+            Vector2 inputDir = GetMovementInput();
+            Vector2 moveDir = inputDir.normalized;
             if (moveDir == Vector2.zero) moveDir = Vector2.up; // default up
 
             isDashing = true;
@@ -230,17 +267,21 @@ public class PlayerController : MonoBehaviour
             if (CameraShake.Instance != null) CameraShake.Instance.Shake(0.1f, 0.05f);
         }
 
+        bool shootPressed = false;
+        if (keyboard != null && keyboard.spaceKey.isPressed) shootPressed = true;
+        if (gamepad != null && gamepad.buttonSouth.isPressed) shootPressed = true;
+
         // Shooting — uses Update (not FixedUpdate) so it respects cooldown with Time.time
-        if (Input.GetKey(KeyCode.Space) && Time.time >= lastShotTime + shootCooldown)
+        if (shootPressed && Time.time >= lastShotTime + shootCooldown)
         {
             Shoot();
             lastShotTime = Time.time;
         }
 
         // Sprite flipping for visual direction feedback
-        float moveH = Input.GetAxisRaw("Horizontal");
-        if (moveH < 0f) sr.flipX = true;
-        else if (moveH > 0f) sr.flipX = false;
+        Vector2 currentMoveInput = GetMovementInput();
+        if (currentMoveInput.x < 0f) sr.flipX = true;
+        else if (currentMoveInput.x > 0f) sr.flipX = false;
     }
 
     /// <summary>
@@ -258,8 +299,9 @@ public class PlayerController : MonoBehaviour
         else
         {
             // Get input from Arrow Keys (or WASD)
-            float h = Input.GetAxisRaw("Horizontal") * moveSpeed * Time.fixedDeltaTime;
-            float v = Input.GetAxisRaw("Vertical") * moveSpeed * Time.fixedDeltaTime;
+            Vector2 inputDir = GetMovementInput();
+            float h = inputDir.x * moveSpeed * Time.fixedDeltaTime;
+            float v = inputDir.y * moveSpeed * Time.fixedDeltaTime;
             targetPos = rb.position + new Vector2(h, v);
         }
 
