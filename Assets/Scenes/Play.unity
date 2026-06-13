@@ -179,15 +179,15 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
   m_fontSize: 25
-  m_fontSizeBase: 25
+  m_fontSizeBase: 19
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -253,7 +253,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -165.41594, y: 55.527}
+  m_AnchoredPosition: {x: -218, y: 55.524}
   m_SizeDelta: {x: 269.1681, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &184453180
@@ -335,7 +335,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -438,6 +438,9 @@ MonoBehaviour:
   finalScoreTextTMP: {fileID: 108840432}
   finalTimeText: {fileID: 0}
   finalTimeTextTMP: {fileID: 1445989326}
+  comboText: {fileID: 0}
+  grazeNotificationText: {fileID: 0}
+  dashCooldownText: {fileID: 0}
 --- !u!114 &196430899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -631,7 +634,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &482591460
 RectTransform:
   m_ObjectHideFlags: 0
@@ -843,7 +846,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 14.000008, y: -105}
+  m_AnchoredPosition: {x: -10.999992, y: -143}
   m_SizeDelta: {x: 250, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &730570170
@@ -1450,7 +1453,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -1542,8 +1545,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 204, y: 55.524}
-  m_SizeDelta: {x: 269.1681, y: 80}
+  m_AnchoredPosition: {x: 176.44551, y: 55.524}
+  m_SizeDelta: {x: 324.2771, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1445989326
 MonoBehaviour:
@@ -1587,15 +1590,15 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
   m_fontSize: 25
-  m_fontSizeBase: 25
+  m_fontSizeBase: 19
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -1893,7 +1896,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 14, y: -25}
+  m_AnchoredPosition: {x: -11, y: -63}
   m_SizeDelta: {x: 250, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1783461683
@@ -2024,7 +2027,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 122.76}
+  m_AnchoredPosition: {x: 0, y: 157}
   m_SizeDelta: {x: 600, y: 54.4727}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1808983166
@@ -2056,7 +2059,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4278190335
   m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2069,7 +2072,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -2257,7 +2260,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GamePlayManager
   playerPrefab: {fileID: 2553218445452913815, guid: 719831b65d6b38a48b64c96e49a9f1f7, type: 3}
   asteroidPrefab: {fileID: 4348083211393653990, guid: ad4fa7c20da2ad942836c1a90c8ea937, type: 3}
-  starPrefab: {fileID: 2129300344962525390, guid: 3a3ca2e49d8e2d245915efe1242772be, type: 3}
+  powerUpPrefabs: []
   laserPrefab: {fileID: 0}
   spawnInterval: 2
   maxAsteroids: 15
